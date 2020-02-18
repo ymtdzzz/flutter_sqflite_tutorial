@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_todoapp/ClientsBloc.dart';
 import 'package:flutter_todoapp/Database.dart';
 import 'dart:math';
 import 'ClientModel.dart';
@@ -29,14 +30,22 @@ class _MyHomePageState extends State<MyHomePage> {
     Client(firstName: "oussama", lastName: "ali", blocked: false),
   ];
 
+  final bloc = ClientsBloc();
+
+  @override
+  void dispose() {
+    bloc.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Flutter SQLite"),
       ),
-      body: FutureBuilder(
-        future: DBProvider.db.getAllClients(),
+      body: StreamBuilder(
+        stream: bloc.clients,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
             return ListView.builder(
@@ -47,14 +56,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   key: UniqueKey(),
                   background: Container(color: Colors.red),
                   onDismissed: (direction) {
-                    DBProvider.db.deleteClient(item.id);
+                    bloc.delete(item.id);
                   },
                   child: ListTile(
                     title: Text(item.lastName),
                     leading: Text(item.id.toString()),
                     trailing: Checkbox(
                       onChanged: (bool value) {
-                        DBProvider.db.blockOrUnblock(item);
+                        bloc.blockUnblock(item);
                         setState(() {});
                       },
                       value: item.blocked,
